@@ -255,6 +255,14 @@ module.exports = (req, res) => {
         return res.json({ message: 'Cache cleared successfully' });
     }
     
+    // Clear cache endpoint (GET for easy testing)
+    if (url === '/clear-cache' && method === 'GET') {
+        cache.flushAll();
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.setHeader('Content-Type', 'application/json');
+        return res.json({ message: 'Cache cleared successfully' });
+    }
+    
     // Default 404
     return res.status(404).json({ error: 'Not found' });
 };
