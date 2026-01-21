@@ -110,25 +110,32 @@ const tags = [
 
 function handleCORS(req, res) {
     const origin = req.headers.origin;
-    // Use base URL without query params for cache key to ensure same endpoint is cached together
     const baseUrl = req.url.split('?')[0];
     const cacheKey = baseUrl;
     
     const cachedResponse = cache.get(cacheKey);
     if (cachedResponse) {
         res.setHeader('X-Cache', 'hit');
-        // VULNERABILITY: Return cached origin instead of current request origin
+        // VULNERABILITY: Return cached origin (might be different from current request)
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
         res.setHeader('Content-Type', 'application/json');
         return { data: cachedResponse.data, cached: true, cacheKey };
     }
     
     res.setHeader('X-Cache', 'miss');
-    // VULNERABILITY: Echo the origin and cache it
-    const responseOrigin = origin || 'null';
+    // For clean cache: use wildcard (allows all origins)
+    const responseOrigin = '*';
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
-    return { cached: false, cacheKey, origin: responseOrigin };
+    
+    // Only cache if there's a specific origin (this creates the vulnerability)
+    const shouldCache = origin && origin !== 'null';
+    return { 
+        cached: false, 
+        cacheKey, 
+        origin: shouldCache ? origin : responseOrigin,
+        shouldCache 
+    };
 }
 
 module.exports = (req, res) => {
@@ -185,7 +192,7 @@ module.exports = (req, res) => {
     if (url === '/wp-json/wp/v2/posts' || url.startsWith('/wp-json/wp/v2/posts?')) {
         const corsResult = handleCORS(req, res);
         
-        if (!corsResult.cached) {
+        if (!corsResult.cached && corsResult.shouldCache) {
             const cacheData = {
                 data: blogPosts,
                 origin: corsResult.origin
