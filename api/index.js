@@ -131,7 +131,8 @@ function handleCORS(req, res) {
     cache.set(cacheKey + '_hits', hitCount + 1);
     
     res.setHeader('X-Cache', `miss (${hitCount + 1}/${REQUIRED_HITS})`);
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    // VULNERABILITY: Echo the origin instead of using *
+    res.setHeader('Access-Control-Allow-Origin', origin || 'null');
     res.setHeader('Content-Type', 'application/json');
     return { cached: false };
 }
