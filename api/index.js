@@ -110,27 +110,19 @@ const tags = [
 
 function handleCORS(req, res) {
     const origin = req.headers.origin;
-    const cacheKey = req.url;
-    
-    // Get current hit count for this cache key
-    const hitCount = cache.get(cacheKey + '_hits') || 0;
-    const REQUIRED_HITS = 3; // Change this number to require more hits
+    // Use base URL without query params for cache key to ensure same endpoint is cached together
+    const baseUrl = req.url.split('?')[0];
+    const cacheKey = baseUrl;
     
     const cachedResponse = cache.get(cacheKey);
-    if (cachedResponse && hitCount >= REQUIRED_HITS) {
+    if (cachedResponse) {
         res.setHeader('X-Cache', 'hit');
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
         res.setHeader('Content-Type', 'application/json');
-        
-        // Increment hit counter
-        cache.set(cacheKey + '_hits', hitCount + 1);
         return { data: cachedResponse.data, cached: true };
     }
     
-    // Increment hit counter even for misses
-    cache.set(cacheKey + '_hits', hitCount + 1);
-    
-    res.setHeader('X-Cache', `miss (${hitCount + 1}/${REQUIRED_HITS})`);
+    res.setHeader('X-Cache', 'miss');
     // VULNERABILITY: Echo the origin instead of using *
     res.setHeader('Access-Control-Allow-Origin', origin || 'null');
     res.setHeader('Content-Type', 'application/json');
@@ -142,6 +134,14 @@ module.exports = (req, res) => {
     
     // Set Vercel cache headers to force caching (VULNERABLE - no Vary: Origin)
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
+    
+    // Simulate application cache status based on Vercel cache
+    const isVercelCached = req.headers['x-vercel-cache'] === 'HIT';
+    if (isVercelCached) {
+        res.setHeader('X-Cache', 'hit');
+    } else {
+        res.setHeader('X-Cache', 'miss');
+    }
     
     // Handle CORS preflight
     if (method === 'OPTIONS') {
