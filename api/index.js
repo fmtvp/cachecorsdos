@@ -117,16 +117,18 @@ function handleCORS(req, res) {
     const cachedResponse = cache.get(cacheKey);
     if (cachedResponse) {
         res.setHeader('X-Cache', 'hit');
+        // VULNERABILITY: Return cached origin instead of current request origin
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
         res.setHeader('Content-Type', 'application/json');
-        return { data: cachedResponse.data, cached: true };
+        return { data: cachedResponse.data, cached: true, cacheKey };
     }
     
     res.setHeader('X-Cache', 'miss');
-    // VULNERABILITY: Echo the origin instead of using *
-    res.setHeader('Access-Control-Allow-Origin', origin || 'null');
+    // VULNERABILITY: Echo the origin and cache it
+    const responseOrigin = origin || 'null';
+    res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
-    return { cached: false };
+    return { cached: false, cacheKey, origin: responseOrigin };
 }
 
 module.exports = (req, res) => {
@@ -186,9 +188,9 @@ module.exports = (req, res) => {
         if (!corsResult.cached) {
             const cacheData = {
                 data: blogPosts,
-                origin: req.headers.origin || '*'
+                origin: corsResult.origin
             };
-            cache.set(req.url, cacheData);
+            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : blogPosts);
