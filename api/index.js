@@ -173,9 +173,9 @@ module.exports = (req, res) => {
         if (!corsResult.cached) {
             const cacheData = {
                 data: responseData,
-                origin: req.headers.origin || '*'
+                origin: corsResult.origin
             };
-            cache.set(req.url, cacheData);
+            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : responseData);
@@ -209,9 +209,9 @@ module.exports = (req, res) => {
         if (!corsResult.cached) {
             const cacheData = {
                 data: post,
-                origin: req.headers.origin || '*'
+                origin: corsResult.origin
             };
-            cache.set(req.url, cacheData);
+            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : post);
@@ -224,9 +224,9 @@ module.exports = (req, res) => {
         if (!corsResult.cached) {
             const cacheData = {
                 data: categories,
-                origin: req.headers.origin || '*'
+                origin: corsResult.origin
             };
-            cache.set(req.url, cacheData);
+            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : categories);
@@ -239,9 +239,9 @@ module.exports = (req, res) => {
         if (!corsResult.cached) {
             const cacheData = {
                 data: tags,
-                origin: req.headers.origin || '*'
+                origin: corsResult.origin
             };
-            cache.set(req.url, cacheData);
+            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : tags);
