@@ -112,15 +112,25 @@ function handleCORS(req, res) {
     const origin = req.headers.origin;
     const cacheKey = req.url;
     
+    // Get current hit count for this cache key
+    const hitCount = cache.get(cacheKey + '_hits') || 0;
+    const REQUIRED_HITS = 3; // Change this number to require more hits
+    
     const cachedResponse = cache.get(cacheKey);
-    if (cachedResponse) {
+    if (cachedResponse && hitCount >= REQUIRED_HITS) {
         res.setHeader('X-Cache', 'hit');
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
         res.setHeader('Content-Type', 'application/json');
+        
+        // Increment hit counter
+        cache.set(cacheKey + '_hits', hitCount + 1);
         return { data: cachedResponse.data, cached: true };
     }
     
-    res.setHeader('X-Cache', 'miss');
+    // Increment hit counter even for misses
+    cache.set(cacheKey + '_hits', hitCount + 1);
+    
+    res.setHeader('X-Cache', `miss (${hitCount + 1}/${REQUIRED_HITS})`);
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Content-Type', 'application/json');
     return { cached: false };
@@ -128,6 +138,9 @@ function handleCORS(req, res) {
 
 module.exports = (req, res) => {
     const { url, method } = req;
+    
+    // Set Vercel cache headers to force caching (VULNERABLE - no Vary: Origin)
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
     
     // Handle CORS preflight
     if (method === 'OPTIONS') {
@@ -242,3 +255,27 @@ module.exports = (req, res) => {
     // Default 404
     return res.status(404).json({ error: 'Not found' });
 };
+
+// Alternative: Time-based cache (replace handleCORS function above to use)
+/*
+function handleCORS(req, res) {
+    const origin = req.headers.origin;
+    const cacheKey = req.url;
+    const CACHE_DELAY = 30000; // 30 seconds delay before cache hit
+    
+    const cacheEntry = cache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cacheEntry && (now - cacheEntry.timestamp) > CACHE_DELAY) {
+        res.setHeader('X-Cache', 'hit');
+        res.setHeader('Access-Control-Allow-Origin', cacheEntry.origin);
+        res.setHeader('Content-Type', 'application/json');
+        return { data: cacheEntry.data, cached: true };
+    }
+    
+    res.setHeader('X-Cache', 'miss');
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Content-Type', 'application/json');
+    return { cached: false };
+}
+*/
