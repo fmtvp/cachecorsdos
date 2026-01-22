@@ -177,11 +177,11 @@ module.exports = (req, res) => {
         };
         
         if (!corsResult.cached) {
-            const cacheData = {
+            globalCache[corsResult.cacheKey] = {
                 data: responseData,
-                origin: corsResult.origin
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
             };
-            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : responseData);
@@ -213,11 +213,11 @@ module.exports = (req, res) => {
         }
         
         if (!corsResult.cached) {
-            const cacheData = {
+            globalCache[corsResult.cacheKey] = {
                 data: post,
-                origin: corsResult.origin
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
             };
-            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : post);
@@ -228,11 +228,11 @@ module.exports = (req, res) => {
         const corsResult = handleCORS(req, res);
         
         if (!corsResult.cached) {
-            const cacheData = {
+            globalCache[corsResult.cacheKey] = {
                 data: categories,
-                origin: corsResult.origin
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
             };
-            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : categories);
@@ -243,11 +243,11 @@ module.exports = (req, res) => {
         const corsResult = handleCORS(req, res);
         
         if (!corsResult.cached) {
-            const cacheData = {
+            globalCache[corsResult.cacheKey] = {
                 data: tags,
-                origin: corsResult.origin
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
             };
-            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : tags);
