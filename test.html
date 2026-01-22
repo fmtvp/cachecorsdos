@@ -45,7 +45,8 @@
       req.onload = reqListener;
       req.onerror = reqError;
       req.open('GET', targetUrl, true); 
-      req.withCredentials = true;
+      // Don't send credentials to avoid wildcard CORS issues
+      req.withCredentials = false;
       req.send();
     }
     
