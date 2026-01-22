@@ -123,7 +123,7 @@ function handleCORS(req, res) {
     
     res.setHeader('X-Cache', 'miss');
     // VULNERABILITY: Echo the origin header instead of using wildcard
-    const responseOrigin = origin || '*';
+    const responseOrigin = origin && origin !== 'null' ? origin : '*';
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
     
