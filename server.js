@@ -263,10 +263,6 @@ app.get('/wp-json/wp/v2/tags', (req, res) => {
     res.json(tags);
 });
 
-// Redirect root to blog
-app.get('/', (req, res) => {
-    res.redirect('/blog.html');
-});
 
 // Clear cache endpoint
 app.post('/clear-cache', (req, res) => {
@@ -277,7 +273,4 @@ app.post('/clear-cache', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Vulnerable server running on http://localhost:${PORT}`);
-    console.log('WP-JSON API available at: http://localhost:3000/wp-json');
-    console.log('Demo page: http://localhost:3000');
-    console.log('External test page: http://localhost:3000/external.html');
 });

@@ -123,17 +123,17 @@ function handleCORS(req, res) {
     }
     
     res.setHeader('X-Cache', 'miss');
-    // For clean cache: use wildcard (allows all origins)
-    const responseOrigin = '*';
+    // VULNERABILITY: Echo the origin header instead of using wildcard
+    const responseOrigin = origin || '*';
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
     
-    // Only cache if there's a specific origin (this creates the vulnerability)
+    // Cache with the specific origin (creates the vulnerability)
     const shouldCache = origin && origin !== 'null';
     return { 
         cached: false, 
         cacheKey, 
-        origin: shouldCache ? origin : responseOrigin,
+        origin: responseOrigin,
         shouldCache 
     };
 }
@@ -141,8 +141,10 @@ function handleCORS(req, res) {
 module.exports = (req, res) => {
     const { url, method } = req;
     
-    // Set Vercel cache headers to force caching (VULNERABLE - no Vary: Origin)
-    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
+    // Set Vercel cache headers to disable edge caching for demo
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     
     // Simulate application cache status based on Vercel cache
     const isVercelCached = req.headers['x-vercel-cache'] === 'HIT';
