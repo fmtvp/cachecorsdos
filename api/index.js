@@ -1,7 +1,5 @@
-const NodeCache = require('node-cache');
-
-// Global cache instance for Vercel
-const cache = new NodeCache({ stdTTL: 300 });
+// Simple in-memory cache that persists across requests
+let globalCache = {};
 
 // Sample blog data
 const blogPosts = [
@@ -112,9 +110,10 @@ function handleCORS(req, res) {
     const origin = req.headers.origin;
     const baseUrl = req.url.split('?')[0];
     const cacheKey = baseUrl;
+    const now = Date.now();
     
-    const cachedResponse = cache.get(cacheKey);
-    if (cachedResponse) {
+    const cachedResponse = globalCache[cacheKey];
+    if (cachedResponse && (now - cachedResponse.timestamp) < 300000) { // 5 min cache
         res.setHeader('X-Cache', 'hit');
         // VULNERABILITY: Return cached origin (might be different from current request)
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
@@ -128,13 +127,11 @@ function handleCORS(req, res) {
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
     
-    // Cache with the specific origin (creates the vulnerability)
-    const shouldCache = origin && origin !== 'null';
     return { 
         cached: false, 
         cacheKey, 
         origin: responseOrigin,
-        shouldCache 
+        timestamp: now
     };
 }
 
@@ -194,12 +191,12 @@ module.exports = (req, res) => {
     if (url === '/wp-json/wp/v2/posts' || url.startsWith('/wp-json/wp/v2/posts?')) {
         const corsResult = handleCORS(req, res);
         
-        if (!corsResult.cached && corsResult.shouldCache) {
-            const cacheData = {
+        if (!corsResult.cached) {
+            globalCache[corsResult.cacheKey] = {
                 data: blogPosts,
-                origin: corsResult.origin
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
             };
-            cache.set(corsResult.cacheKey, cacheData);
         }
         
         return res.json(corsResult.cached ? corsResult.data : blogPosts);
@@ -257,16 +254,8 @@ module.exports = (req, res) => {
     }
     
     // Clear cache endpoint
-    if (url === '/clear-cache' && method === 'POST') {
-        cache.flushAll();
-        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-        res.setHeader('Content-Type', 'application/json');
-        return res.json({ message: 'Cache cleared successfully' });
-    }
-    
-    // Clear cache endpoint (GET for easy testing)
-    if (url === '/clear-cache' && method === 'GET') {
-        cache.flushAll();
+    if (url === '/clear-cache') {
+        globalCache = {};
         res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
         res.setHeader('Content-Type', 'application/json');
         return res.json({ message: 'Cache cleared successfully' });
