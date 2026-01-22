@@ -112,9 +112,14 @@ function handleCORS(req, res) {
     const cacheKey = baseUrl;
     const now = Date.now();
     
+    // Debug logging
+    console.log('Request:', { origin, baseUrl, cacheKey });
+    
     const cachedResponse = globalCache[cacheKey];
     if (cachedResponse && (now - cachedResponse.timestamp) < 300000) { // 5 min cache
+        console.log('Cache HIT:', cachedResponse.origin);
         res.setHeader('X-Cache', 'hit');
+        res.setHeader('X-Debug-Cached-Origin', cachedResponse.origin);
         // VULNERABILITY: Return cached origin (might be different from current request)
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
         res.setHeader('Content-Type', 'application/json');
@@ -124,7 +129,9 @@ function handleCORS(req, res) {
     res.setHeader('X-Cache', 'miss');
     // VULNERABILITY: Echo the origin header instead of using wildcard
     const responseOrigin = origin && origin !== 'null' ? origin : '*';
+    console.log('Cache MISS, setting origin:', responseOrigin);
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
+    res.setHeader('X-Debug-Current-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
     
     return { 
