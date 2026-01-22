@@ -122,6 +122,7 @@ function handleCORS(req, res) {
         res.setHeader('X-Debug-Cached-Origin', cachedResponse.origin);
         // VULNERABILITY: Return cached origin (might be different from current request)
         res.setHeader('Access-Control-Allow-Origin', cachedResponse.origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Content-Type', 'application/json');
         return { data: cachedResponse.data, cached: true, cacheKey };
     }
@@ -131,6 +132,7 @@ function handleCORS(req, res) {
     const responseOrigin = origin && origin !== 'null' ? origin : '*';
     console.log('Cache MISS, setting origin:', responseOrigin);
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('X-Debug-Current-Origin', responseOrigin);
     res.setHeader('Content-Type', 'application/json');
     
@@ -163,6 +165,7 @@ module.exports = (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Origin');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
         return res.status(200).end();
     }
     
