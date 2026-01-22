@@ -168,11 +168,61 @@ module.exports = (req, res) => {
             description: "Your Daily Inspiration",
             url: req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000",
             home: req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000",
+            gmt_offset: "0",
+            timezone_string: "",
+            namespaces: ["wp/v2"],
             routes: {
-                "/wp-json/wp/v2/posts": {
+                "/wp-json/": {
+                    "namespace": "",
                     "methods": ["GET"],
-                    "endpoints": [{ "methods": ["GET"], "args": {} }]
+                    "endpoints": [{ "methods": ["GET"], "args": {} }],
+                    "_links": { "self": [{ "href": `${req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000"}/wp-json/` }] }
+                },
+                "/wp-json/wp/v2": {
+                    "namespace": "wp/v2",
+                    "methods": ["GET"],
+                    "endpoints": [{ "methods": ["GET"], "args": {} }],
+                    "_links": { "self": [{ "href": `${req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000"}/wp-json/wp/v2` }] }
+                },
+                "/wp-json/wp/v2/posts": {
+                    "namespace": "wp/v2",
+                    "methods": ["GET", "POST"],
+                    "endpoints": [
+                        { "methods": ["GET"], "args": { "context": { "default": "view" }, "page": { "default": 1 }, "per_page": { "default": 10 } } },
+                        { "methods": ["POST"], "args": { "title": { "required": true }, "content": { "required": true } } }
+                    ],
+                    "_links": { "self": [{ "href": `${req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000"}/wp-json/wp/v2/posts` }] }
+                },
+                "/wp-json/wp/v2/posts/(?P<id>[\\d]+)": {
+                    "namespace": "wp/v2",
+                    "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+                    "endpoints": [
+                        { "methods": ["GET"], "args": { "id": { "required": true }, "context": { "default": "view" } } },
+                        { "methods": ["POST", "PUT", "PATCH"], "args": { "id": { "required": true } } },
+                        { "methods": ["DELETE"], "args": { "id": { "required": true }, "force": { "default": false } } }
+                    ]
+                },
+                "/wp-json/wp/v2/categories": {
+                    "namespace": "wp/v2",
+                    "methods": ["GET", "POST"],
+                    "endpoints": [
+                        { "methods": ["GET"], "args": { "context": { "default": "view" }, "page": { "default": 1 }, "per_page": { "default": 10 } } },
+                        { "methods": ["POST"], "args": { "name": { "required": true } } }
+                    ],
+                    "_links": { "self": [{ "href": `${req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000"}/wp-json/wp/v2/categories` }] }
+                },
+                "/wp-json/wp/v2/tags": {
+                    "namespace": "wp/v2",
+                    "methods": ["GET", "POST"],
+                    "endpoints": [
+                        { "methods": ["GET"], "args": { "context": { "default": "view" }, "page": { "default": 1 }, "per_page": { "default": 10 } } },
+                        { "methods": ["POST"], "args": { "name": { "required": true } } }
+                    ],
+                    "_links": { "self": [{ "href": `${req.headers.host ? `https://${req.headers.host}` : "http://localhost:3000"}/wp-json/wp/v2/tags` }] }
                 }
+            },
+            _links: {
+                "help": [{ "href": "https://developer.wordpress.org/rest-api/" }]
             }
         };
         
