@@ -311,6 +311,31 @@ module.exports = (req, res) => {
         return res.json({ message: 'Cache cleared successfully' });
     }
     
+    // Catch-all for any wp-json path - makes all subpaths vulnerable
+    if (url.startsWith('/wp-json/')) {
+        const corsResult = handleCORS(req, res);
+        
+        // Generic WordPress API response for any path
+        const responseData = {
+            code: "rest_no_route",
+            message: "No route was found matching the URL and request method",
+            data: { status: 404 },
+            _links: {
+                "help": [{ "href": "https://developer.wordpress.org/rest-api/" }]
+            }
+        };
+        
+        if (!corsResult.cached) {
+            globalCache[corsResult.cacheKey] = {
+                data: responseData,
+                origin: corsResult.origin,
+                timestamp: corsResult.timestamp
+            };
+        }
+        
+        return res.status(404).json(corsResult.cached ? corsResult.data : responseData);
+    }
+
     // Default 404
     return res.status(404).json({ error: 'Not found' });
 };
